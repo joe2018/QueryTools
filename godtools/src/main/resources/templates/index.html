@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <!-- import CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <header style="text-align: center;">
+        <h1>欢迎使用</h1>
+        <p>我是excel筛选插件</p>
+    </header>
+</head>
+
+<body>
+    <div id="app">
+        <div style="margin-right: 0px;width: 200px;">
+            <el-upload class="upload-demo" action="/source/upfile" :on-change="handleChange"
+                :file-list="fileList" name='file' accept=".xls,.xlsx," :on-success='success'>
+                <el-button type="primary">点击上传</el-button>
+            </el-upload>
+        </div>
+        <div style="margin-right: 0px;width: 200px;">
+            <el-upload class="upload-demo" action="/compare/upfile" :on-change="handleChange"
+                       :file-list="fileList" name='file' accept=".xls,.xlsx," :on-success='success'>
+                <el-button type="primary">点击对比</el-button>
+            </el-upload>
+        </div>
+
+        <div style="margin-right: 0px;width: 200px;">
+            <el-button type="primary" @click="tableToExcel">点击导出</el-button>
+        </div>
+
+        <el-dialog title="筛选" :visible.sync="dialogVisible" width="30%">
+
+            <el-form :rules="rules" ref="form" :model="form" label-width="80px" class="demo-ruleForm">
+                <el-form-item label="公司名称" prop="name">
+                    <el-input v-model="form.name" @input='nameChange'></el-input>
+                </el-form-item>
+                <el-form-item label="早班人员" prop="mp">
+                    <el-input v-model="form.mp"></el-input>
+                </el-form-item>
+                <el-form-item label="中班人员" prop="cp">
+                    <el-input v-model="form.cp"></el-input>
+                </el-form-item>
+                <el-form-item label="晚班人员" prop="np">
+                    <el-input v-model="form.np"></el-input>
+                </el-form-item>
+                <el-form-item label="限速" prop="speed">
+                    <el-input v-model="form.speed"></el-input>
+                </el-form-item>
+                <el-form-item prop="time" label="输入月份">
+                    <!-- <el-input v-model="form.time"></el-input> -->
+                    <el-date-picker v-model="form.time" type="month" @change="monthChange" placeholder="选择月" />
+                </el-form-item>
+                <el-form-item label="报警时长" prop="duration">
+                    <el-input v-model="form.duration" placeholder='单位秒'></el-input>
+                </el-form-item>
+                <el-button @click="dialogVisible = false">取 消</el-button>
+                <el-button type="primary" @click="diary('form')">生成日志</el-button>
+                <el-button type="primary" @click="Investigation('form')">生成排查表</el-button>
+            </el-form>
+
+
+            <span slot="footer" class="dialog-footer">
+            </span>
+        </el-dialog>
+    </div>
+</body>
+<!-- import Vue before Element -->
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<!-- import JavaScript -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                visible: false,
+                fileList: [],
+                data: {
+                    name: "fileName"
+                },
+                click: '',
+                time: '',
+                timea: '',
+                canlick: true,
+                loading: '',
+                copytime: '',
+                arr1: [],
+                arr2: [],
+                arr3: [],
+                arr4: [],
+                arr5: [],
+                arr6: [],
+                arr7: [],
+                everyDay: [],
+                everyDate: [],
+                dialogVisible: false,
+                form: {
+                    name: '',
+                    mp: '',
+                    cp: '',
+                    np: '',
+                    speed: '',
+                    time: '',
+                    duration: '',
+                },
+                rules: {
+                    name: [
+                        { required: true, message: '请输入公司名称', trigger: 'blur' },
+                    ],
+                    mp: [
+                        { required: true, message: '请输入早班人员', trigger: 'blur' },
+                    ],
+                    cp: [
+                        { required: true, message: '请输入中班人员', trigger: 'blur' },
+                    ],
+                    np: [
+                        { required: true, message: '请输入晚班人员', trigger: 'blur' },
+                    ],
+                    speed: [
+                        { required: true, message: '请输入速度', trigger: 'blur' },
+                    ],
+                    time: [
+                        { required: true, message: '请选择月份', trigger: 'blur' },
+                    ],
+                    duration: [
+                        { required: true, message: '请输入报警时长', trigger: 'blur' },
+                    ],
+                }
+            }
+        },
+        methods: {
+            nameChange(val){
+                console.log(val)
+                this.arr7 = [];
+            },
+            success(response, file, fileList) {
+                if (response == '上传文件失败，文件不是excel表格') {
+                    this.$message({
+                        message: '文件不符合模板',
+                        type: 'error'
+                    });
+                    this.fileList = [];
+                    return;
+                }
+                if (response.state == '-1') {
+                    this.$message({
+                        message: '上传模板不匹配',
+                        type: 'error'
+                    });
+                    this.fileList.pop();
+                    return;
+                }
+                this.$message({
+                        message: '上传成功',
+                        type: 'success'
+                    });
+            },
+            monthChange(date) {
+                var date = new Date(date)
+                var y = date.getFullYear()
+                var m = date.getMonth() + 1
+                m = m < 10 ? ('0' + m) : m
+                var d = date.getDate()
+                d = d < 10 ? ('0' + d) : d
+                const time = y + '-' + m + '-' + d
+                this.time = time;
+                this.copytime = time;
+                this.timea = time.split("-")[1];
+                this.getEveryDay(date, date.getMonth());
+                console.log(this.time)
+            },
+            getEveryDay(date, month) {
+                //设置月份
+                date.setMonth(month + 1);
+                //设置一个月的某一天-这里设置为零则取到的日期中的天就会是当月的最后一天（比如，二月份就是28或29，其他月份就是30或31），方便下边的循环
+                date.setDate(0);
+                let dayArry = [];
+                //获取月份的某一天
+                let day = date.getDate();
+                for (let i = 1; i <= day; i++) {
+                    date.setDate(i);
+                    if (date.getDay() == 0 || date.getDay() == 6) {
+                        dayArry.push(i);
+                    } else {
+                        dayArry.push(i);
+                    }
+                }
+                //   console.log(dayArry)
+                this.everyDay = dayArry;
+            },
+            handleChange() { },
+            onSubmit() { },
+            async getlist() {
+                var data = {
+                    company: this.form.name,
+                    length: Number(this.form.duration),
+                    start_time: this.time + ' 00:00:00',
+                    start_speed: Number(this.form.speed),
+                }
+                if (data.length == '') {
+                    delete data.length
+                }
+                if (data.start_speed == '') {
+                    delete data.start_speed
+                }
+                var url = "/journal"
+                // var url = "http://117.78.8.215:8888//journal?company=" + this.form.name +'&length='+ this.form.duration +'&start_time='+ this.form.time +'&start_speed='+ this.form.speed
+                await axios.post(url, data)
+                    .then(response => {
+                        this.results = response.data.results;
+                        this.arr1 = this.results[0]
+                        this.arr2 = this.results[1]
+                        this.arr3 = this.results[2]
+                        for (i = 0; i < this.arr1.length; i++) {
+                            this.arr1[i].peson = this.form.mp
+                        }
+                        for (i = 0; i < this.arr2.length; i++) {
+                            this.arr2[i].peson = this.form.cp
+                        }
+                        for (i = 0; i < this.arr3.length; i++) {
+                            this.arr3[i].peson = this.form.np
+                        }
+                        //   if(this.results[0].length == 0 && this.results[1].length == 0  && this.results[2].length ==0){
+                        //         this.$message({
+                        //           message: '暂无数据',
+                        //           type: 'warning'
+                        //         });
+                        //         return;
+                        //       }
+                        if (this.click == 1) {
+                            this.arr4 = []
+                            this.arr5 = []
+                            this.arr6 = []
+                            //   去重 按车牌号
+                            if (this.arr1.length != 0) {
+                                var a = this.arr1;
+                                for (var i = 0; i < a.length; i++) {
+                                    this.arr4.push(a[i])
+                                }
+                            }
+                            if (this.arr2.length != 0) {
+                                var a = this.arr2;
+                                for (var i = 0; i < a.length; i++) {
+                                    this.arr5.push(a[i])
+                                }
+
+                            }
+                            if (this.arr3.length != 0) {
+                                var a = this.arr3;
+                                for (var i = 0; i < a.length; i++) {
+                                    this.arr6.push(a[i])
+                                }
+                            }
+                            this.arr7 = this.arr7.concat(this.arr4).concat(this.arr5).concat(this.arr6)
+                        } else {
+                            if (this.arr1.length != 0) {
+                                this.arr1 = this.filterArr(this.arr1)
+                            }
+                            if (this.arr2.length != 0) {
+                                this.arr2 = this.filterArr(this.arr2)
+                            }
+                            if (this.arr3.length != 0) {
+                                this.arr3 = this.filterArr(this.arr3)
+                            }
+                            this.generate()
+                        }
+                    })
+                    .catch(error => {
+                        this.$message({
+                            message: error,
+                            type: 'error'
+                        });
+                    })
+            },
+            //去重
+            filterArr(arr) {
+                var a = arr.filter(item=> item.type == '疲劳驾驶报警')
+                var b = arr.filter(item=> item.type == '超速报警')
+                var result = [];
+                var obj = {};
+                for (var i = 0; i < a.length; i++) {
+                    if (!obj[a[i].car_number]) {
+                        result.push(a[i]);
+                        obj[a[i].car_number] = true;
+                    } 
+                }
+                // 222222
+                var obja = {};
+                for (var i = 0; i < b.length; i++) {
+                    if (!obja[b[i].car_number]) {
+                        result.push(b[i]);
+                        obja[b[i].car_number] = true;
+                    } 
+                }
+                return result
+            },
+            //生成排查表
+            Investigation(form) {
+                this.$refs[form].validate((valid) => {
+                    if (valid && this.canlick) {
+                        this.loading = this.$loading({
+                            lock: true,
+                            text: '正在整合本月数据,请耐心等待',
+                            spinner: 'el-icon-loading',
+                            background: 'rgba(255, 255, 255, 0.7)'
+                        });
+                        this.everyDate = [];
+                        //算出这个月的日期
+                        for (var i = 0; i < this.everyDay.length; i++) {
+                            if (i < 9) {
+                                this.everyDate.push(this.time.substring(0, 8) + '0' + (i + 1))
+                            } else {
+                                this.everyDate.push(this.time.substring(0, 8) + (i + 1))
+                            }
+                        }
+                        var time = 0;
+                        var abc = setInterval(() => {
+                            this.time = this.everyDate[time]
+                            if (this.time == undefined || this.time == "undefined") {
+                                this.paichaex()
+                                clearInterval(abc)
+                                this.canlick = true;
+                                this.time = this.copytime;
+                                return;
+                            }
+                            this.canlick = false;
+                            this.getlist();
+                            this.click = 1;
+                            time += 1
+                        }, 2000);
+                    } else {
+                        this.$message({
+                            message: '正在下载中，或所填信息不全',
+                            type: 'error'
+                        });
+                        return false;
+                    }
+                });
+            },
+            //生成日志
+            diary(form) {
+                this.$refs[form].validate((valid) => {
+                    if (valid && this.canlick) {
+                        this.everyDate = [];
+                        this.loading = this.$loading({
+                            lock: true,
+                            text: '正在下载本月数据,请耐心等待',
+                            spinner: 'el-icon-loading',
+                            background: 'rgba(255, 255, 255, 0.7)'
+                        });
+                        //算出这个月的日期
+                        //   console.log(this.time)
+                        for (var i = 0; i < this.everyDay.length; i++) {
+                            if (i < 9) {
+                                this.everyDate.push(this.time.substring(0, 8) + '0' + (i + 1))
+                            } else {
+                                this.everyDate.push(this.time.substring(0, 8) + (i + 1))
+                            }
+                        }
+                        var time = 0;
+                        var abc = setInterval(() => {
+                            this.time = this.everyDate[time]
+                            if (this.time == undefined || this.time == "undefined") {
+                                clearInterval(abc)
+                                this.canlick = true;
+                                this.loading.close();
+                                this.time = this.copytime;
+                                return;
+                            }
+                            this.canlick = false;
+                            this.getlist();
+                            this.click = 2;
+                            time += 1
+                        }, 2000);
+
+                    } else {
+                        this.$message({
+                            message: '正在下载中，或所填信息不全',
+                            type: 'error'
+                        });
+                        return false;
+                    }
+                });
+            },
+            paichaex() {
+                var arr = this.arr7;
+                this.loading.close();
+                var tableStr = `
+            <tr style="text-align: center;">
+                <td colspan="11"  rowspan="2">` + this.timea + "月" + this.form.name + "道路运输监控排查表" + ` </td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;">
+                <td colspan="1" rowspan="2">序号</td>
+                <td colspan="1" rowspan="2">车牌号</td>
+                <td colspan="1" rowspan="2">告警日期</td>
+                <td colspan="1" rowspan="2">告警时间</td>
+                <td colspan="1" rowspan="2">监控平台显示位置</td>
+                <td colspan="1" rowspan="2">行车记录仪速度</td>
+                <td colspan="1" rowspan="2">违规情况</td>
+                <td colspan="1" rowspan="2" >处置措施记录</td>
+                <td colspan="1" rowspan="2">处置时间</td>
+                <td colspan="1" rowspan="2">处理结果</td>
+                <td colspan="1" rowspan="2">监控处理人员</td>
+            </tr><tr></tr>`;
+                for (i = 0; i < arr.length; i++) {
+                    tableStr += `<tr style="text-align: center;">
+                <td rowspan="2">${i + 1}</td>
+                <td rowspan="2">${arr[i].car_number}</td>
+                <td rowspan="2">${arr[i].start_time.split(' ')[0]}</td>
+                <td rowspan="2">${arr[i].start_time.split(' ')[1]}</td>
+                <td rowspan="2">${arr[i].end_location}</td>
+                <td rowspan="2">${arr[i].start_speed}</td>
+                <td rowspan="2">${arr[i].type}</td>
+                <td rowspan="2">${'已通知'}</td>
+                <td rowspan="2">${this.renderTime(arr[i].end_time)}</td>
+                <td rowspan="2">已处理</td>
+                <td rowspan="2">${arr[i].peson}</td>
+                </tr><tr></tr>`;
+                }
+                //Worksheet名
+                var worksheet = 'Sheet1'
+                var uri = 'data:application/vnd.ms-excel;base64,';
+                // 真正要导出（下载）的HTML模板
+                var exportTemplate = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"
+            xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <!--[if gte mso 9]>
+                <xml>
+                <x:ExcelWorkbook>
+                <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                <x:Name>${worksheet}</x:Name>
+                <x:WorksheetOptions>
+                <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+                </x:ExcelWorksheets>
+                </x:ExcelWorkbook>
+                </xml>
+                <![endif]-->
+            </head>
+            <body>
+                <table syle="table-layout: fixed;word-wrap: break-word; word-break: break-all;" border="2">${tableStr}</table>
+            </body>
+            </html>`;
+                //下载模板
+                var a = document.createElement("a");
+                a.href = uri + this.base64(exportTemplate);
+                a.download = this.timea + "月" + this.form.name + "道路运输监控排查表.xls";
+                a.click();
+            },
+            renderTime(date) {
+                var dateee = new Date(date).toJSON();
+                return new Date(+new Date(dateee) + 8 * 3600 * 1000).toISOString().replace(/T/g, ' ').replace(/\.[\d]{3}Z/, '').split(' ')[1]
+            },
+            //将秒转化为时分秒
+            formateSeconds(endTime) {
+                let secondTime = parseInt(endTime)//将传入的秒的值转化为Number
+                let min = 0// 初始化分
+                let h = 0// 初始化小时
+                let result = ''
+                if (secondTime > 60) {//如果秒数大于60，将秒数转换成整数
+                    min = parseInt(secondTime / 60)//获取分钟，除以60取整数，得到整数分钟
+                    secondTime = parseInt(secondTime % 60)//获取秒数，秒数取佘，得到整数秒数
+                    if (min > 60) {//如果分钟大于60，将分钟转换成小时
+                        h = parseInt(min / 60)//获取小时，获取分钟除以60，得到整数小时
+                        min = parseInt(min % 60) //获取小时后取佘的分，获取分钟除以60取佘的分
+                    }
+                }
+                result = `${h.toString().padStart(2, '0')}时${min.toString().padStart(2, '0')}分${secondTime.toString().padStart(2, '0')}秒`;
+                return result
+            },
+            generate() {
+                // 发现 闽BY8686在广东省揭阳市揭西县京棉路上浦村东北623米 00:00:00 超速报警，速度：77.1公里/小时，限速：80公里/小时，经过通知后回复正常
+                var string1 = '';
+                for (i = 0; i < this.arr1.length; i++) {
+                    string1 += `发现` + this.arr1[i].car_number + '在' + this.arr1[i].end_location + this.arr1[i].start_time.split(' ')[1] + this.arr1[i].type + ',' + this.arr1[i].info + ","
+                        + "速度：" + this.arr1[i].end_speed + "公里/小时，" + "限速：" + this.form.speed + "公里/小时，" + '报警时长' + this.formateSeconds(this.arr1[i].length) + ',经过通知后恢复正常' + `<br style="mso-data-placement:same-cell;"/>` + `<br style="mso-data-placement:same-cell;"/>`
+                }
+                var string2 = '';
+                for (i = 0; i < this.arr2.length; i++) {
+                    string2 += `发现` + this.arr2[i].car_number + '在' + this.arr2[i].end_location + this.arr2[i].start_time.split(' ')[1] + this.arr2[i].type + ',' + this.arr2[i].info + ","
+                        + "速度：" + this.arr2[i].end_speed + "公里/小时，" + "限速：" + this.form.speed + "公里/小时，" + '报警时长' + this.formateSeconds(this.arr2[i].length) + ',经过通知后恢复正常' + `<br style="mso-data-placement:same-cell;"/>` + `<br style="mso-data-placement:same-cell;"/>`
+                }
+                var string3 = '';
+                for (i = 0; i < this.arr3.length; i++) {
+                    string3 += `发现` + this.arr3[i].car_number + '在' + this.arr3[i].end_location + this.arr3[i].start_time.split(' ')[1] + this.arr3[i].type + ',' + this.arr3[i].info + ","
+                        + "速度：" + this.arr3[i].end_speed + "公里/小时，" + "限速：" + this.form.speed + "公里/小时，" + '报警时长' + this.formateSeconds(this.arr3[i].length) + ',经过通知后恢复正常' + `<br style="mso-data-placement:same-cell;"/>` + `<br style="mso-data-placement:same-cell;"/>`
+                }
+                var tableStr = `
+             <tr style="text-align: center;">
+                <td rowspan="2" colspan="6" style="font-weight: 700;font-size:16px;">`+ this.form.name + `车载终端运行监控值班日志</td>
+            </tr>
+            <tr style="text-align: center;">
+            </tr>
+            <tr style="text-align: left;">
+                <td colspan="3" rowspan="2" style="text-align: left;font-weight: 700;">日期：`+ this.time + `</td>
+                <td colspan="3" rowspan="2" style="text-align: center;">责任岗位：监控员</td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;">
+                <td rowspan="16">交` + `<br style="mso-data-placement:same-cell;"/>` + `接` + `<br style="mso-data-placement:same-cell;"/>` + `事` + `<br style="mso-data-placement:same-cell;"/>` + `项</td>
+                <td colspan="5" rowspan="2"></td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;">
+                <td colspan="5"  rowspan="2">交接事项：移交GPS值班监控日记及车辆运行GPS监控排查情况登记表各一本。</td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;">
+                <td colspan="1" rowspan="2" >交接人员签名：</td>
+                <td colspan="1" rowspan="2" >  `+ this.form.np + `</td>
+                <td colspan="3" rowspan="2"></td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;" rowspan="3">
+                <td colspan="1" rowspan="2">接班人员签名：</td>
+                <td colspan="1" rowspan="2">`+ this.form.mp + `</td>
+                <td colspan="3" rowspan="2">交接班时间：  `+ this.time + `  00 时 00 分</td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;">
+                <td colspan="1"  rowspan="2">交接人员签名：</td>
+                <td colspan="1"  rowspan="2">`+ this.form.mp + `</td>
+                <td colspan="3"  rowspan="2"></td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;">
+                <td colspan="1"  rowspan="2">接班人员签名：</td>
+                <td colspan="1"  rowspan="2">`+ this.form.cp + `</td>
+                <td colspan="3"  rowspan="2">交接班时间：  `+ this.time + ` 08 时 00 分</td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;">
+                <td colspan="1"  rowspan="2" >交接人员签名：</td>
+                <td colspan="1" rowspan="2" >`+ this.form.cp + `</td>
+                <td colspan="3" rowspan="2" ></td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;">
+                <td colspan="1"  rowspan="2">接班人员签名：</td>
+                <td colspan="1"  rowspan="2">`+ this.form.np + `</td>
+                <td colspan="3"  rowspan="2">交接班时间：  `+ this.time + ` 16 时 00 分</td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;">
+                <td rowspan="31">值` + `<br style="mso-data-placement:same-cell;"/>` + `班` + `<br style="mso-data-placement:same-cell;"/>` + `监` + `<br style="mso-data-placement:same-cell;"/>` + `控` + `<br style="mso-data-placement:same-cell;"/>` + `情` + `<br style="mso-data-placement:same-cell;"/>` + `况</td>
+                <td colspan="5" rowspan="2"></td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: left;">
+                <td colspan="5" rowspan="2">系统运行情况：</td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: center;">
+                <td colspan="5" rowspan="2" style="font-weight: 700;">本日系统一切正常， 无故障</td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: left;">
+                <td colspan="5" rowspan="2">监控日志：</td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: left;">
+                <td colspan="5" rowspan="2" style="font-weight: 700;">00：00-08：00:</td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: left;">
+                <td colspan="5" rowspan="5">`+ (string1 == '' ? `一切正常` : string1) + ` </td>
+            </tr>
+            <tr></tr>
+            <tr></tr>
+            <tr></tr>
+            <tr></tr>
+            <tr style="text-align: left;">
+                <td colspan="5" rowspan="2" style="font-weight: 700;">08：00-16：00:</td>
+            </tr>
+            <tr></tr>
+            <tr style="text-align: left;">
+                <td colspan="5" rowspan="5">`+ (string2 == '' ? `一切正常` : string2) + `</td>
+            </tr>
+            <tr></tr>
+            <tr></tr>
+            <tr></tr>
+            <tr></tr>
+            <tr style="text-align: left;">
+                <td colspan="5" rowspan="2" style="font-weight: 700;">16：00-24：00:</td>
+            </tr>
+           <tr></tr>
+           <tr style="text-align: left;">
+               <td colspan="5" rowspan="5">`+ (string3 == '' ? `一切正常` : string3) + `</td>
+           </tr>
+           <tr></tr>
+           <tr></tr>
+           <tr></tr>
+           <tr></tr>
+           <tr >
+               <td colspan="2" rowspan="2">值班时段：00：00-24：00</td>
+               <td colspan="3" rowspan="2">本日所属其余车辆一切正常</td>
+           </tr>
+           <tr></tr>
+           <tr style="text-align: center;">
+               <td  rowspan="2">违` + `<br style="mso-data-placement:same-cell;"/>` + `章` + `<br style="mso-data-placement:same-cell;"/>` + `情` + `<br style="mso-data-placement:same-cell;"/>` + `况</td>
+               <td colspan="5" rowspan="2" style="text-align: left;font-weight: 700;">当班违章及处置情况：` + `<br style="mso-data-placement:same-cell;"/>` + `1.经过电话、短信通知后，车辆均已恢复正常。` + `<br style="mso-data-placement:same-cell;"/>` + `2.其余车辆无违规章情况。</td>
+           </tr>
+           <tr></tr>
+           <tr style="text-align: center;">
+               <td  rowspan="2" >备注</td>
+               <td colspan="5"rowspan="2" style="text-align: left;">当班人员应在交接班前将本班发现的车辆违章情况记录在车辆监控排查情况登记表</td>
+           </tr>
+           <tr></tr>`;
+                //Worksheet名
+                var worksheet = 'Sheet1'
+                var uri = 'data:application/vnd.ms-excel;base64,';
+                // 真正要导出（下载）的HTML模板
+                var exportTemplate = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"
+                xmlns="http://www.w3.org/TR/REC-html40">
+                <head><!--[if gte mso 9]>
+                    <xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+                        <x:Name>${worksheet}</x:Name>
+                        <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>
+                     </x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+                </head>
+                <body>
+                    <table syle="table-layout: fixed;word-wrap: break-word; word-break: break-all;" border="2">${tableStr}</table>
+                </body>
+            /html>`;
+                //下载模板
+                var a = document.createElement("a");
+                a.href = uri + this.base64(exportTemplate);
+                a.download = this.time + this.form.name + "车载终端运行监控值班日志.xls";
+                a.click();
+            },
+            tableToExcel() {
+                this.dialogVisible = true;
+            },
+            base64(s) {
+                return window.btoa(unescape(encodeURIComponent(s)))
+            }
+        },
+        created() {
+            this.formateSeconds(14173)
+        }
+    })
+</script>
+
+</html>
+<style>
+    #app {
+        text-align: center;
+        margin-top: 120px;
+        display: flex;
+        justify-content: center;
+        /* align-items: center; */
+    }
+
+    .el-date-editor {
+        width: 100% !important;
+    }
+</style>
