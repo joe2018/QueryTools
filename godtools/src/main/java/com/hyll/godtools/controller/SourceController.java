@@ -1,12 +1,15 @@
 package com.hyll.godtools.controller;
 
 
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.github.pagehelper.Page;
 import com.hyll.godtools.pojo.TableType;
 
+import com.hyll.godtools.pojo.TransportEntity;
 import com.hyll.godtools.service.TranspotrService;
 import com.hyll.godtools.util.ReadExcel;
 import io.swagger.annotations.Api;
@@ -39,6 +42,12 @@ public class SourceController {
         return "index";
     }
 
+    @ResponseBody
+    @RequestMapping(value = "/test", method = RequestMethod.GET)
+    public List<String> test(){
+        return Convert.convert(new TypeReference<List<String>>() {}, new TransportEntity());
+    }
+
     /**
      * 上传数据源文件写入数据库
      * @param file 数据源Excel表
@@ -49,9 +58,7 @@ public class SourceController {
     @ApiImplicitParam(name = "file", value = "源文件", paramType = "query", required = true, dataType = "file")
     @RequestMapping(value = "/upfile", method = RequestMethod.POST)
     public Map<String,String> updateExcel(@RequestParam(value = "file",required = false) MultipartFile file){
-
         Map<String, String> map = new HashMap<>();
-
         if (!Objects.equals(file.getOriginalFilename(), "")){
             String fileName = file.getOriginalFilename();
             assert fileName != null;
@@ -155,17 +162,11 @@ public class SourceController {
      * @return 数据Json
      */
     private JSONObject getJsonObject(Page transpotrPage) {
-        HashMap<Object, Object> colorMap = new HashMap<>();
-        colorMap.put("pageNum", String.valueOf(transpotrPage.getPageNum()));
-        colorMap.put("pageSize", String.valueOf(transpotrPage.getPageSize()));
-        colorMap.put("startRow", String.valueOf(transpotrPage.getStartRow()));
-        colorMap.put("endRow", String.valueOf(transpotrPage.getEndRow()));
-        colorMap.put("total", String.valueOf(transpotrPage.getTotal()));
-        colorMap.put("pages", String.valueOf(transpotrPage.getPages()));
+        HashMap<Object, Object> colorMap = Convert.convert(new TypeReference<HashMap<Object, Object>>() {}, transpotrPage);
         JSONObject jsonObject = new JSONObject();
         jsonObject.putOpt("state",0);
         jsonObject.putOpt("info",colorMap);
-        jsonObject.append("content", JSONUtil.parse(transpotrPage.toArray()));
+        jsonObject.putOpt("content", transpotrPage);
         return jsonObject;
     }
 

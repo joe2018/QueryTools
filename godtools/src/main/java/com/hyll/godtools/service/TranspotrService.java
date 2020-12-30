@@ -14,14 +14,12 @@ public interface TranspotrService {
 
     Page PageQuery(int pageNo, int pageNum, int pageSize);
 
-//    int upSqlByEccal(List<Transport> List);
-
     Map<Integer, List<TransportEntity>> compareByExcel(List<TransportEntity> List);
 
     int delByList(List<String> list);
 
     int delByBatchID(String BatchID);
 
-    public int inserSqlByEccal(List<TransportEntity> list) throws IOException;
+    int inserSqlByEccal(List<TransportEntity> list);
 
 }

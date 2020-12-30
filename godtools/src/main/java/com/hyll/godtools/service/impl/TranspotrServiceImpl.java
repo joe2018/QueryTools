@@ -1,5 +1,6 @@
 package com.hyll.godtools.service.impl;
 
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.thread.ThreadUtil;
@@ -44,12 +45,10 @@ public class TranspotrServiceImpl implements TranspotrService {
             //参数2为数据中心ID
             ExecutorService executor = ThreadUtil.newExecutor(10);
             Snowflake snowflake = IdUtil.createSnowflake(1, 1);
-            long id = snowflake.nextId();
-            String batchId = String.valueOf(id);
+            String batchId = Convert.toStr(snowflake.nextId());
             Date date = DateTime.now();
             if(!batchId.isEmpty()){
-                CopyOnWriteArrayList<TransportEntity> tempList = new CopyOnWriteArrayList<>(list);
-                tempList.forEach(item ->{
+                list.forEach(item ->{
                     executor.execute(() -> {
                         if(transpotrMapper.select(item).size() == 0){
                             item.setLoading_date(item.getLoading_time());
