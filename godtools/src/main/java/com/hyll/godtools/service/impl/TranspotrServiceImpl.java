@@ -9,7 +9,8 @@ import com.github.pagehelper.PageHelper;
 import com.hyll.godtools.mapper.TableTypeMapper;
 import com.hyll.godtools.mapper.TranspotrMapper;
 import com.hyll.godtools.pojo.TableType;
-import com.hyll.godtools.pojo.Transport;
+
+import com.hyll.godtools.pojo.TransportEntity;
 import com.hyll.godtools.service.TranspotrService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ public class TranspotrServiceImpl implements TranspotrService {
 
 
     @Override
-    public int inserSqlByEccal(List<Transport> list) {
+    public int inserSqlByEccal(List<TransportEntity> list) {
             TableType tableType = new TableType();
             //参数1为终端ID
             //参数2为数据中心ID
@@ -47,7 +48,7 @@ public class TranspotrServiceImpl implements TranspotrService {
             String batchId = String.valueOf(id);
             Date date = DateTime.now();
             if(!batchId.isEmpty()){
-                CopyOnWriteArrayList<Transport> tempList = new CopyOnWriteArrayList<>(list);
+                CopyOnWriteArrayList<TransportEntity> tempList = new CopyOnWriteArrayList<>(list);
                 tempList.forEach(item ->{
                     executor.execute(() -> {
                         if(transpotrMapper.select(item).size() == 0){
@@ -72,22 +73,22 @@ public class TranspotrServiceImpl implements TranspotrService {
         PageHelper.startPage(pageNum,pageSize);
         //用page类型或者pageInfo类型目的就是获取总页数以及总条数
         if (typeId == 1){
-            return (Page<Transport>) transpotrMapper.selectAll();
+            return (Page<TransportEntity>) transpotrMapper.selectAll();
         }else {
             return (Page<TableType>) tableTypeMapper.selectAll();
         }
     }
 
     @Override
-    public Map<Integer, List<Transport>> compareByExcel(List<Transport> list){
-        Map<Integer, List<Transport>> resultMap = new HashMap<>();
+    public Map<Integer, List<TransportEntity>> compareByExcel(List<TransportEntity> list){
+        Map<Integer, List<TransportEntity>> resultMap = new HashMap<>();
         for (int index = 0; index < list.size(); index++) {
-            Transport item = list.get(index);
-            Transport transport = new Transport();
+            TransportEntity item = list.get(index);
+            TransportEntity transport = new TransportEntity();
             transport.setTracking_number(item.getTracking_number());
             transport.setLoading_date(item.getLoading_date());
-            List<Transport> sourceData = transpotrMapper.select(transport);
-            List<Transport> dataList = new ArrayList<>();
+            List<TransportEntity> sourceData = transpotrMapper.select(transport);
+            List<TransportEntity> dataList = new ArrayList<>();
             if (!sourceData.isEmpty()){
                 dataList.add(sourceData.get(0));
             }

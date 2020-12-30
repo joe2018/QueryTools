@@ -1,13 +1,14 @@
 package com.hyll.godtools.mapper;
 
-import com.hyll.godtools.pojo.Transport;
+
+import com.hyll.godtools.pojo.TransportEntity;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 import tk.mybatis.mapper.common.Mapper;
 
 @Repository
-public interface TranspotrMapper extends Mapper<Transport> {
+public interface TranspotrMapper extends Mapper<TransportEntity> {
 
     @Delete("delete from transport where id = #{id}")
     void deleteByID(@Param("id") String id);

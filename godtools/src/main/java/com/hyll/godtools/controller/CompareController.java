@@ -2,7 +2,8 @@ package com.hyll.godtools.controller;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.hyll.godtools.pojo.Transport;
+
+import com.hyll.godtools.pojo.TransportEntity;
 import com.hyll.godtools.service.TranspotrService;
 import com.hyll.godtools.util.ReadExcel;
 import io.swagger.annotations.Api;
@@ -43,10 +44,10 @@ public class CompareController {
             String fileName = file.getOriginalFilename();
             assert fileName != null;
             if (fileName.endsWith(".xlsx") | fileName.endsWith(".xls")) {
-                List<Transport> transportList;
+                List<TransportEntity> transportList;
                 try {
                     transportList = ReadExcel.readExcel(file);
-                    Map<Integer, List<Transport>> resultMap = transpotrService.compareByExcel(transportList);
+                    Map<Integer, List<TransportEntity>> resultMap = transpotrService.compareByExcel(transportList);
                     jsonData.putOpt("state",0);
                     jsonData.putOpt("data", resultMap);
                     return jsonData;

@@ -2,7 +2,8 @@ package com.hyll.godtools.util;
 
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
-import com.hyll.godtools.pojo.Transport;
+
+import com.hyll.godtools.pojo.TransportEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -10,7 +11,7 @@ import java.util.List;
 
 public class ReadExcel {
 
-    public static List<Transport> readExcel(MultipartFile file) throws IOException {
+    public static List<TransportEntity> readExcel(MultipartFile file) throws IOException {
             try{
                     ExcelReader reader = ExcelUtil.getReader(file.getInputStream(), 0);
                     reader.addHeaderAlias("订单号","order_number");
@@ -54,7 +55,7 @@ public class ReadExcel {
                     reader.addHeaderAlias("是否开票","invoice_type");
                     reader.addHeaderAlias("厂单号","merchant_number");
                     reader.addHeaderAlias("货主","shipper");
-                    return reader.readAll(Transport.class);
+                    return reader.readAll(TransportEntity.class);
             }catch (Exception e){
                     return null;
             }
