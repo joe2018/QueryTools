@@ -40,7 +40,7 @@ public class CompareController {
     @RequestMapping(value = "/upfile", method = RequestMethod.POST)
     public JSONObject compareData(@RequestParam(value = "file",required = false) MultipartFile file) {
         JSONObject jsonData = new JSONObject();
-        if (!Objects.equals(file.getOriginalFilename(), "")) {
+        if (!file.isEmpty()) {
             String fileName = file.getOriginalFilename();
             assert fileName != null;
             if (fileName.endsWith(".xlsx") | fileName.endsWith(".xls")) {

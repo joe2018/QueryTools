@@ -2,6 +2,8 @@ package com.hyll.godtools.controller;
 
 
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.convert.ConverterRegistry;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONObject;
@@ -22,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -42,11 +45,10 @@ public class SourceController {
         return "index";
     }
 
-    @ResponseBody
-    @RequestMapping(value = "/test", method = RequestMethod.GET)
-    public List<String> test(){
-        return Convert.convert(new TypeReference<List<String>>() {}, new TransportEntity());
-    }
+//    @ResponseBody
+//    @RequestMapping(value = "/test", method = RequestMethod.GET)
+//    public List<String> test(){
+//        return ConverterRegistry.;
 
     /**
      * 上传数据源文件写入数据库
@@ -59,13 +61,14 @@ public class SourceController {
     @RequestMapping(value = "/upfile", method = RequestMethod.POST)
     public Map<String,String> updateExcel(@RequestParam(value = "file",required = false) MultipartFile file){
         Map<String, String> map = new HashMap<>();
-        if (!Objects.equals(file.getOriginalFilename(), "")){
+        if (!file.isEmpty()) {
             String fileName = file.getOriginalFilename();
             assert fileName != null;
             if (fileName.endsWith(".xlsx") | fileName.endsWith(".xls")){
                 try {
-                    if(ReadExcel.readExcel(file) != null){
-                        if(transpotrService.inserSqlByEccal(ReadExcel.readExcel(file)) == 0){
+                    List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
+                    if(transportEntityList != null){
+                        if(transpotrService.inserSqlByEccal(transportEntityList) == 0){
                             map.put("state","0");
                             map.put("message","文件写入成功！");
                         }else {
