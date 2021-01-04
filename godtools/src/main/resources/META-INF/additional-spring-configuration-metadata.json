@@ -4,5 +4,15 @@
       "name": "spring.datasource.useGlobalDataSourceStat",
       "type": "java.lang.String",
       "description": "Description for spring.datasource.useGlobalDataSourceStat."
-  }
-] }
+    },
+    {
+      "name": "spring.datasource.initialSize",
+      "type": "java.lang.String",
+      "description": "Description for spring.datasource.initialSize."
+    },
+    {
+      "name": "pagehelper.returnPageInfo",
+      "type": "java.lang.String",
+      "description": "Description for pagehelper.returnPageInfo."
+    }
+  ] }

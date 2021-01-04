@@ -5,14 +5,16 @@ import com.github.pagehelper.Page;
 
 import com.hyll.godtools.pojo.TransportEntity;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public interface TranspotrService {
 
-    Page PageQuery(int pageNo, int pageNum, int pageSize);
+    Map PageQuery(int pageNo, int pageNum, int pageSize);
 
     Map<Integer, List<TransportEntity>> compareByExcel(List<TransportEntity> List);
 
@@ -20,6 +22,11 @@ public interface TranspotrService {
 
     int delByBatchID(String BatchID);
 
-    int inserSqlByEccal(List<TransportEntity> list);
+    void inserSqlByEccal(List<TransportEntity> list,String fileMD5);
 
+    Boolean SeleteByFileMD5(String fileMD5);
+
+    Boolean checkFile(MultipartFile file);
+
+    Map<String,Object> getResultsMap(Page<T> transpotrPage);
 }

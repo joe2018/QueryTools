@@ -1,8 +1,12 @@
 package com.hyll.godtools.controller;
 
+import cn.hutool.core.io.file.FileNameUtil;
+import cn.hutool.crypto.SecureUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
+import com.hyll.godtools.config.ResultCode;
+import com.hyll.godtools.pojo.Result;
 import com.hyll.godtools.pojo.TransportEntity;
 import com.hyll.godtools.service.TranspotrService;
 import com.hyll.godtools.util.ReadExcel;
@@ -10,11 +14,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.log4j.Log4j2;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,33 +44,16 @@ public class CompareController {
     @ApiOperation(value="上传对比文件", notes="上传对比文件与数据库中数据进行比对", produces="application/json")
     @ApiImplicitParam(name = "file", value = "比对文件", paramType = "query", required = true, dataType = "file")
     @RequestMapping(value = "/upfile", method = RequestMethod.POST)
-    public JSONObject compareData(@RequestParam(value = "file",required = false) MultipartFile file) {
-        JSONObject jsonData = new JSONObject();
-        if (!file.isEmpty()) {
-            String fileName = file.getOriginalFilename();
-            assert fileName != null;
-            if (fileName.endsWith(".xlsx") | fileName.endsWith(".xls")) {
-                List<TransportEntity> transportList;
-                try {
-                    transportList = ReadExcel.readExcel(file);
-                    Map<Integer, List<TransportEntity>> resultMap = transpotrService.compareByExcel(transportList);
-                    jsonData.putOpt("state",0);
-                    jsonData.putOpt("data", resultMap);
-                    return jsonData;
-                }catch (Exception e){
-                    e.printStackTrace();
-                    jsonData.putOpt("state",-1);
-                    return jsonData;
-                }
-            }else {
-                jsonData.putOpt("state",-1);
-                jsonData.putOpt("error","上传文件失败，文件格式错误");
-                return jsonData;
-            }
-        }else {
-            jsonData.putOpt("state",-1);
-            jsonData.putOpt("error","上传文件失败，文件格式错误");
-            return jsonData;
+    public Result compareData(@RequestParam(value = "file",required = false) MultipartFile file) {
+        if (!transpotrService.checkFile(file)){
+            return Result.failure(ResultCode.FILE_WRITE_FAILURE);
+        }
+        try {
+            List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
+            Map<Integer, List<TransportEntity>> resultMap = transpotrService.compareByExcel(transportEntityList);
+            return Result.success(resultMap);
+        } catch (Exception e) {
+            return Result.failure(ResultCode.OPERATION_FAILURS);
         }
     }
 }

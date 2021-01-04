@@ -3,12 +3,20 @@ package com.hyll.godtools.controller;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.convert.ConverterRegistry;
+import cn.hutool.core.io.FileTypeUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.file.FileNameUtil;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.crypto.SecureUtil;
+import cn.hutool.db.nosql.redis.RedisDS;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.github.pagehelper.Page;
+import com.hyll.godtools.config.ResultCode;
+import com.hyll.godtools.pojo.Result;
 import com.hyll.godtools.pojo.TableType;
 
 import com.hyll.godtools.pojo.TransportEntity;
@@ -20,12 +28,16 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.log4j.Log4j2;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import redis.clients.jedis.Jedis;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.*;
 
 @RestController
@@ -59,45 +71,24 @@ public class SourceController {
     @ApiOperation(value="上传源文件", notes="上传源文件写入数据库", produces="application/json")
     @ApiImplicitParam(name = "file", value = "源文件", paramType = "query", required = true, dataType = "file")
     @RequestMapping(value = "/upfile", method = RequestMethod.POST)
-    public Map<String,String> updateExcel(@RequestParam(value = "file",required = false) MultipartFile file){
+    public Result<T> updateExcel(@RequestParam(value = "file",required = false) MultipartFile file) throws IOException {
         Map<String, String> map = new HashMap<>();
-        if (!file.isEmpty()) {
-            String fileName = file.getOriginalFilename();
-            assert fileName != null;
-            if (fileName.endsWith(".xlsx") | fileName.endsWith(".xls")){
-                try {
-                    List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
-                    if(transportEntityList != null){
-                        if(transpotrService.inserSqlByEccal(transportEntityList) == 0){
-                            map.put("state","0");
-                            map.put("message","文件写入成功！");
-                        }else {
-                            map.put("state","-1");
-                            map.put("message","文件存入错误！");
-                        }
-                        return map;
-                    }
-                    else {
-                        map.put("state","-1");
-                        map.put("message","文件读取错误！");
-                        return map;
-                    }
-                } catch(IOException e){
-                    map.put("state","-1");
-                    map.put("message","文件读取错误！");
-                    return map;
-                }
-            }else {
-                map.put("state","-1");
-                map.put("message","上传文件失败，文件格式错误");
-                return map;
-            }
-        }else {
-            map.put("state","-1");
-            map.put("message","上传文件失败，文件格式错误");
-            return map;
+        String fileMD5 = SecureUtil.md5(file.getInputStream());
+        if(transpotrService.SeleteByFileMD5(fileMD5)){
+            return Result.failure(ResultCode.FILE_ALREADY_EXISTS);
+        }
+        if (!transpotrService.checkFile(file)){
+            return Result.failure(ResultCode.FILE_WRITE_FAILURE);
+        }
+        try{
+            List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
+            transpotrService.inserSqlByEccal(transportEntityList,fileMD5);
+            return Result.success();
+        }catch (Exception e){
+            return Result.failure(ResultCode.FILE_WRITE_ERROR);
         }
     }
+
 
     @ResponseBody
     @ApiOperation(value="分页", notes="分页输出", produces="application/json")
@@ -105,9 +96,16 @@ public class SourceController {
             @ApiImplicitParam(name = "pageNo", value = "页码",paramType = "path", required = true, dataType = "int"),
             @ApiImplicitParam(name = "pageSize", value = "每页显示数量",paramType = "path", required = true, dataType = "int")})
     @RequestMapping(value = "/page/{pageNo}/{pageSize}", method = RequestMethod.GET)
-    public JSONObject getPageData(@PathVariable("pageNo") int pageNo, @PathVariable("pageSize") int pageSize){
-        Page transpotrPage = transpotrService.PageQuery(pageNo,pageSize,1);
-        return getJsonObject(transpotrPage);
+    public Result getPageData(@PathVariable("pageNo") int pageNo, @PathVariable("pageSize") int pageSize){
+        Jedis jedis = RedisDS.create().getJedis();
+        if (jedis.get("1—"+pageNo+"-"+pageSize) != null){
+            JSONObject JsonData = JSONUtil.parseObj(jedis.get("1—"+pageNo+"-"+pageSize));
+            return Result.success(JsonData);
+        }else {
+            return Result.success(transpotrService.PageQuery(pageNo,pageSize,1));
+        }
+
+
     }
 
     @ResponseBody
@@ -116,9 +114,15 @@ public class SourceController {
             @ApiImplicitParam(name = "pageNo", value = "页码",paramType = "path", required = true, dataType = "int"),
             @ApiImplicitParam(name = "pageSize", value = "每页显示数量",paramType = "path", required = true, dataType = "int")})
     @RequestMapping(value = "/batch/{pageNo}/{pageSize}", method = RequestMethod.GET)
-    public JSONObject getBatchData(@PathVariable("pageNo") int pageNo, @PathVariable("pageSize") int pageSize){
-        Page transpotrPage = transpotrService.PageQuery(pageNo,pageSize,2);
-        return getJsonObject(transpotrPage);
+    public Result getBatchData(@PathVariable("pageNo") int pageNo, @PathVariable("pageSize") int pageSize){
+        Jedis jedis = RedisDS.create().getJedis();
+        if (jedis.get("2—"+pageNo+"-"+pageSize) != null){
+            JSONObject JsonData = JSONUtil.parseObj(jedis.get("2—"+pageNo+"-"+pageSize));
+            return Result.success(JsonData);
+        }else {
+            return Result.success(transpotrService.PageQuery(pageNo,pageSize,2));
+        }
+
     }
 
     /**
@@ -130,13 +134,13 @@ public class SourceController {
     @ResponseBody
     @ApiOperation(value="根据ID列表删除数据", notes="根据ID列表删除数据")
     @ApiImplicitParam(name = "IDList", value = "ID列表")
-    public int deleteByIDList(@RequestBody Map<String,List<String>> IDList){
+    public Result<T> deleteByIDList(@RequestBody Map<String,List<String>> IDList){
         try{
             transpotrService.delByList(IDList.get("list"));
-            return 0;
+            return Result.success();
         }catch (Exception e){
             e.printStackTrace();
-            return -1;
+            return Result.failure(ResultCode.OPERATION_FAILURS);
         }
     }
 
@@ -149,28 +153,16 @@ public class SourceController {
     @ResponseBody
     @ApiOperation(value="根据批次ID删除数据", notes="根据批次ID删除数据")
     @ApiImplicitParam(name = "batchID", value = "批次ID")
-    public int deleteByBatchID(@RequestParam(value = "batchID") String batchID){
+    public Result<T> deleteByBatchID(@RequestParam(value = "batchID") String batchID){
         try{
             transpotrService.delByBatchID(batchID);
-            return 0;
+            return Result.success();
         }catch (Exception e){
             e.printStackTrace();
-            return -1;
+            return Result.failure(ResultCode.OPERATION_FAILURS);
         }
     }
 
-    /**
-     * page转json
-     * @param transpotrPage 分页查询结果
-     * @return 数据Json
-     */
-    private JSONObject getJsonObject(Page transpotrPage) {
-        HashMap<Object, Object> colorMap = Convert.convert(new TypeReference<HashMap<Object, Object>>() {}, transpotrPage);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.putOpt("state",0);
-        jsonObject.putOpt("info",colorMap);
-        jsonObject.putOpt("content", transpotrPage);
-        return jsonObject;
-    }
+
 
 }

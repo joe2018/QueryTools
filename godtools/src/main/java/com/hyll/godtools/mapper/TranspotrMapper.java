@@ -10,8 +10,8 @@ import tk.mybatis.mapper.common.Mapper;
 @Repository
 public interface TranspotrMapper extends Mapper<TransportEntity> {
 
-    @Delete("delete from transport where id = #{id}")
-    void deleteByID(@Param("id") String id);
+    @Delete("delete from transport where order_number = #{order_number}")
+    void deleteByID(@Param("order_number") String order_number);
 
     @Delete("delete from transport where batch_number = #{id}")
     void deleteByBatchID(@Param("id") String id);

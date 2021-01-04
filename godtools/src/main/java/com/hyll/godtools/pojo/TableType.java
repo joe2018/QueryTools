@@ -47,6 +47,12 @@ public class TableType {
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss" ,  timezone="GMT+8")
     private Date batch_time;
 
+    /**
+     * 批次导入时间
+     *
+     */
+    @ApiModelProperty(value = "文件md5")
+    private String file_md5;
 
 
 }

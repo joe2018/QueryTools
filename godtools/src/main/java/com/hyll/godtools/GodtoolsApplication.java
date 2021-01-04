@@ -7,7 +7,7 @@ import tk.mybatis.spring.annotation.MapperScan;
 
 
 @SpringBootApplication
-@MapperScan("com.hyll.godtools.mapper")
+@MapperScan("com.hyll.godtools.**.*mapper")
 @EnableTransactionManagement
 public class GodtoolsApplication {
 
