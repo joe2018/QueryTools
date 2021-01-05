@@ -1,0 +1,27 @@
+spring:
+  redis:
+    host: 127.0.01
+    port: 6379
+#    password: cnmg3333
+    timeout: 5000
+
+jetcache:
+  statIntervalMinutes:  15
+  areaInCacheName: false
+  local:
+    default:
+      type: linkedhashmap
+      keyConvertor: fastjson
+  remote:
+    default:
+      type: redis
+      keyConvertor: fastjson
+      valueEncoder: java
+      valueDecoder: java
+      poolConfig:
+        minIdle: 5
+        maxIdle: 20
+        maxTotal: 50
+      host: ${spring.redis.host}
+      port: ${spring.redis.port}
+#      password: ${spring.redis.password}
