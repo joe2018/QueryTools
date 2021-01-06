@@ -2,7 +2,7 @@ package com.hyll.godtools.Timer;
 
 import com.alicp.jetcache.Cache;
 import com.alicp.jetcache.anno.CreateCache;
-import com.hyll.godtools.config.JedisUtil;
+import com.hyll.godtools.util.JedisUtil;
 import com.hyll.godtools.pojo.Constant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +32,8 @@ public class Timer {
      * 每天晚上定时清除比对数据
      */
     @Async
-//    @Scheduled(cron = "0 0 0 1/1 * ?")
-    @Scheduled(cron = "0 14 15 1/1 * ?")
+    @Scheduled(cron = "0 0 0 1/1 * ?")
+//    @Scheduled(cron = "0 59 15 1/1 * ?")
     public void clearCompareDate(){
         try {
             Jedis jedis = jedisUtil.getJedis();

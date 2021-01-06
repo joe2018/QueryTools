@@ -2,22 +2,19 @@ package com.hyll.godtools.service.impl;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.date.DateTime;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.file.FileNameUtil;
 import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.lang.TypeReference;
-import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.db.nosql.redis.RedisDS;
 import cn.hutool.json.JSON;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alicp.jetcache.Cache;
 import com.alicp.jetcache.anno.CreateCache;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
-import com.hyll.godtools.config.JedisUtil;
+import com.hyll.godtools.util.JedisUtil;
 import com.hyll.godtools.config.SequenceId;
 import com.hyll.godtools.mapper.TableTypeMapper;
 import com.hyll.godtools.mapper.TranspotrMapper;
@@ -34,11 +31,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import redis.clients.jedis.Jedis;
-import tk.mybatis.mapper.entity.Example;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
-import java.util.concurrent.*;
 
 
 @Service
