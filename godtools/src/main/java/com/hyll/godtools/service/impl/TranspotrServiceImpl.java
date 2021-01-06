@@ -258,7 +258,7 @@ public class TranspotrServiceImpl implements TranspotrService {
     @Override
     public Map<Integer, List<TransportEntity>>  getJedisTransportEntity(String sequenceId,Integer pageNum,Integer pageSize){
         Jedis jedis = jedisUtil.getJedis();
-        List<String> lrange = jedis.lrange(sequenceId, (pageNum - 1) * pageSize, pageSize-1);
+        List<String> lrange = jedis.lrange(sequenceId, (pageNum - 1) * pageSize, (pageNum - 1) * pageSize+pageSize-1);
         Map<Integer,List<TransportEntity>> map = new HashMap<>();
         lrange.stream().forEach(f->{
             List<TransportEntity> entities = JSONUtil.toList(JSONUtil.parseArray(f), TransportEntity.class);
