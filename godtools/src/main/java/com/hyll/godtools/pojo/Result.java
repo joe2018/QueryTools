@@ -23,10 +23,6 @@ public class Result<T> implements Serializable {
      * 错误信息
      */
     private String message;
-    /**
-     * 比对表格id
-     */
-    private String sequenceId;
 
     /**
      * 总数量
