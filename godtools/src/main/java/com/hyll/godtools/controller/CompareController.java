@@ -6,6 +6,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
 import com.hyll.godtools.config.ResultCode;
+import com.hyll.godtools.config.SequenceId;
 import com.hyll.godtools.pojo.Result;
 import com.hyll.godtools.pojo.TransportEntity;
 import com.hyll.godtools.service.TranspotrService;
@@ -15,6 +16,7 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.log4j.Log4j2;
 import org.apache.poi.ss.formula.functions.T;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,6 +36,8 @@ public class CompareController {
 
     @Autowired
     private TranspotrService transpotrService;
+    @Autowired
+    private SequenceId sequenceId;
 
     /**
      * 上传需要比对的表进行比对，输出比对结果，若车牌号及装货时间存在相同则视为异常，同时输出源数据与导入的数据，若无则输出导入数据
@@ -51,7 +55,9 @@ public class CompareController {
         try {
             List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
             Map<Integer, List<TransportEntity>> resultMap = transpotrService.compareByExcel(transportEntityList);
-            return Result.success(resultMap);
+            String strId = sequenceId.nextId();
+            transpotrService.setJedisTransoportEntity(strId,resultMap);
+            return Result.success(strId);
         } catch (Exception e) {
             return Result.failure(ResultCode.OPERATION_FAILURS);
         }

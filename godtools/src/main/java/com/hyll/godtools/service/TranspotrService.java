@@ -29,4 +29,10 @@ public interface TranspotrService {
     Boolean checkFile(MultipartFile file);
 
     Map<String,Object> getResultsMap(Page<T> transpotrPage);
+
+    void setJedisTransoportEntity(String sequenceId,Map<Integer,List<TransportEntity>> listMap);
+
+    Map<Integer,List<TransportEntity>> getJedisTransportEntity(String sequenceId,Integer pageNum,Integer pageSize);
+
+    long getJedisTransportEntityTotal(String sequenceId);
 }

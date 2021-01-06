@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hyll.godtools.mapper.TranspotrMapper">
+
+     <insert id="batchInsertTranspotrMapper"  parameterType="java.util.List">
+         insert into transport (batch_number,order_number,customer_name,entrust_man_name,entrust_man_phone,delivery_man_name,
+         delivery_man_phone,receive_man_name,receive_man_phone,delivery_provinces,delivery_city,delivery_area,delivery_address,
+         receive_provinces,receive_city,receive_area,receive_address,goods_type,goods_quantity,goods_units,freight_receivable,
+         initiate_amount,tracking_number,carrier_name,carrier_phone,entrust_time,loading_time,loading_date,transport_time,
+         loading_quantity,unloading_quantity,license_plate,driver_name,driver_phone,cash_payments,oil_payment,oil_card,
+         payment_type,business_department,invoice_type,merchant_number,shipper,occurrence_time)
+         values
+         <foreach collection="list" separator=","  item="item">
+             (#{item.batch_number},#{item.order_number},#{item.customer_name},#{item.entrust_man_name},#{item.entrust_man_phone},
+             #{item.delivery_man_name}, #{item.delivery_man_phone},#{item.receive_man_name},#{item.receive_man_phone},#{item.delivery_provinces},
+             #{item.delivery_city},#{item.delivery_area},#{item.delivery_address},#{item.receive_provinces},#{item.receive_city},
+             #{item.receive_area},#{item.receive_address},#{item.goods_type},#{item.goods_quantity},#{item.goods_units},
+             #{item.freight_receivable}, #{item.initiate_amount},#{item.tracking_number},#{item.carrier_name},#{item.carrier_phone},
+             #{item.entrust_time},#{item.loading_time},#{item.loading_date},#{item.transport_time},#{item.loading_quantity},
+             #{item.unloading_quantity},#{item.license_plate},#{item.driver_name},#{item.driver_phone},#{item.cash_payments},
+             #{item.oil_payment},#{item.oil_card}, #{item.payment_type},#{item.business_department},#{item.invoice_type},
+             #{item.merchant_number},#{item.shipper},#{item.occurrence_time}
+             )
+         </foreach>
+     </insert>
+
+    <select id="findListTransportEntityById" parameterType="java.util.List">
+        select id,order_number,customer_name,tracking_number,loading_time,license_plate,oil_card,occurrence_time from  transport
+        <where>
+            id in
+            <foreach collection="list" separator="," open="(" close=")" item="item">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
+
+
+</mapper>

@@ -23,6 +23,15 @@ public class Result<T> implements Serializable {
      * 错误信息
      */
     private String message;
+    /**
+     * 比对表格id
+     */
+    private String sequenceId;
+
+    /**
+     * 总数量
+     */
+    private long total;
 
     // 构造器开始
     /**
@@ -53,6 +62,19 @@ public class Result<T> implements Serializable {
         this.code = resultCode.code();
         this.message = resultCode.message();
     }
+
+
+    /**
+     * 有参构造器
+     * @param obj 返回值
+     */
+    private Result(T obj,long total) {
+        this.code = 200;
+        this.message = "执行成功";
+        this.data = obj;
+        this.success = true;
+        this.total = total;
+    }
     // 构造器结束
 
     /**
@@ -72,6 +94,10 @@ public class Result<T> implements Serializable {
      */
     public static<T> Result<T> success(T data){
         return new Result<T>(data);
+    }
+
+    public static<T> Result<T> success(T data,long total){
+        return new Result<T>(data,total);
     }
 
     /**

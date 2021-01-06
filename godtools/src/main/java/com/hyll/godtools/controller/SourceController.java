@@ -16,6 +16,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.github.pagehelper.Page;
 import com.hyll.godtools.config.ResultCode;
+import com.hyll.godtools.pojo.Pager;
 import com.hyll.godtools.pojo.Result;
 import com.hyll.godtools.pojo.TableType;
 
@@ -81,7 +82,10 @@ public class SourceController {
             return Result.failure(ResultCode.FILE_WRITE_FAILURE);
         }
         try{
+            long start = System.currentTimeMillis();
             List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
+            long end = System.currentTimeMillis();
+            System.out.println(start-end+"毫秒");
             transpotrService.inserSqlByEccal(transportEntityList,fileMD5);
             return Result.success();
         }catch (Exception e){
@@ -163,6 +167,15 @@ public class SourceController {
         }
     }
 
+
+    @PostMapping("/getCompareList")
+    @ApiOperation(value = "获取比对后的数据列表")
+    public Result getCompareList(@RequestBody Pager pager){
+        Map<Integer, List<TransportEntity>> map = transpotrService.getJedisTransportEntity
+                (pager.getSequenceId(), pager.getPage(), pager.getLim());
+        long total = transpotrService.getJedisTransportEntityTotal(pager.getSequenceId());
+        return Result.success(map,total);
+    }
 
 
 }

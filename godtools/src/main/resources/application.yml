@@ -1,4 +1,10 @@
+server:
+  port: 8008
 spring:
+  profiles:
+    active: dev
+  application:
+    name: godtools
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
@@ -11,7 +17,7 @@ spring:
       initial-size: 5
       #   数据源其他配置
       minIdle: 5
-      maxActive: 20
+      maxActive: 30
       maxWait: 60000
       timeBetweenEvictionRunsMillis: 60000
       minEvictableIdleTimeMillis: 300000
@@ -41,11 +47,21 @@ spring:
       file-size-threshold: 100MB
 
 
+logging:
+  file:
+    path: ./_log/${spring.application.name}
+  level:
+    com.hyll.godtools.mapper: debug
 mybatis:
-  type-aliases-package: com.hyll.godtools.pojo
-  mapper-locations: classpath:mapper/*.xml
-
-
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.hyll.godtools.pojo.**
+  configuration:
+    cache-enabled:  false
+    lazy-loading-enabled: false
+    default-statement-timeout:  20000
+    aggressive-lazy-loading:  false
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 # pagehelper
 pagehelper:
   helperDialect: mysql
@@ -53,5 +69,3 @@ pagehelper:
   supportMethodsArguments: true
   params: count=countSql
 
-server:
-  port: 8008

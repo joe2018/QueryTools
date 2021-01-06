@@ -24,7 +24,10 @@ public class MybatisConfiguration {
             PathMatchingResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
             // 能加载多个，所以可以配置通配符(如：classpath*:mapper/**/*.xml)
             sqlSessionFactoryBean.setMapperLocations(
-                    resourcePatternResolver.getResources("classpath:com/hyll/godtools/**/*.xml"));
+//                    resourcePatternResolver.getResources("classpath:com/hyll/godtools/**/*.xml")
+                    resourcePatternResolver.getResources("classpath:mapper/**/*.xml")
+            );
+            sqlSessionFactoryBean.setTypeAliasesPackage("com.hyll.godtools.pojo.**");
             return sqlSessionFactoryBean.getObject();
         } catch (Exception e) {
             log.error("SqlSessionFactory create error!", e);
