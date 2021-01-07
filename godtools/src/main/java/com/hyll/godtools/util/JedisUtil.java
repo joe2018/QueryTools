@@ -14,11 +14,14 @@ public class JedisUtil {
     private Integer port;
     @Value(value = "${spring.redis.password}")
     private String password;
-
+    @Value(value = "${spring.profiles.active}")
+    private String active;
     public  synchronized Jedis getJedis(){
         if(jedis==null){
             jedis = new Jedis(host,port);
-            jedis.auth(password);
+            if(!active.equals("dev")){
+                jedis.auth(password);
+            }
         }
         return jedis;
     }

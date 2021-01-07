@@ -25,7 +25,7 @@
      </insert>
 
     <select id="findListTransportEntityById" parameterType="java.util.List">
-        select id,order_number,customer_name,tracking_number,loading_time,license_plate,oil_card,occurrence_time from  transport
+        select id,batch_number,order_number,customer_name,tracking_number,loading_time,license_plate,oil_card,occurrence_time from  transport
         <where>
             id in
             <foreach collection="list" separator="," open="(" close=")" item="item">

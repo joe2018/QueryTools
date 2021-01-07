@@ -2,6 +2,7 @@ package com.hyll.godtools.service.impl;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.file.FileNameUtil;
 import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.lang.TypeReference;
@@ -14,6 +15,7 @@ import com.alicp.jetcache.Cache;
 import com.alicp.jetcache.anno.CreateCache;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.hyll.godtools.pojo.chche.CacheSequenceId;
 import com.hyll.godtools.util.JedisUtil;
 import com.hyll.godtools.config.SequenceId;
 import com.hyll.godtools.mapper.TableTypeMapper;
@@ -165,8 +167,8 @@ public class TranspotrServiceImpl implements TranspotrService {
             String entity = cachePlateNo.get(item.getLicense_plate() + DateUtils.formatDate(item.getLoading_time()));
             if(StrUtil.isNotEmpty(entity)){
                 TransportEntity transportEntity = JSONUtil.toBean(entity, TransportEntity.class);
-                dataList.add(item);
                 dataList.add(transportEntity);
+                dataList.add(item);
                 resultMap.put(resultMap.size(), dataList);
             }
         });
@@ -291,7 +293,11 @@ public class TranspotrServiceImpl implements TranspotrService {
             integers.stream().forEach(f->{
                 jedis.rpush(sequenceId,JSONUtil.parse(integerListMap.get(f)).toString());
             });
-            cacheSequenceId.put(sequenceId,sequenceId);
+            //记录创建时间
+            CacheSequenceId c = new CacheSequenceId();
+            c.setSequenceId(sequenceId);
+            c.setCreateTime(DateUtil.now());
+            cacheSequenceId.put(sequenceId,JSONUtil.toJsonStr(c));
         }catch (Exception e){
             e.printStackTrace();
         }

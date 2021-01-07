@@ -30,7 +30,7 @@ public interface TranspotrMapper extends Mapper<TransportEntity> {
      * 查询出库里所有数据，进行缓存
      * @return
      */
-    @Select("select id,order_number,customer_name,tracking_number,loading_time,license_plate,oil_card,occurrence_time\n" +
+    @Select("select id,batch_number,order_number,customer_name,tracking_number,loading_time,license_plate,oil_card,occurrence_time\n" +
             "       from transport")
     List<TransportEntity> findListTransportEntity();
 
