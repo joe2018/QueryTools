@@ -45,7 +45,11 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
       file-size-threshold: 100MB
-
+  redis:
+    host: ${redisHost}
+    port: ${redisPort}
+    password: ${redisPassword}
+    timeout: 5000
 
 logging:
   file:

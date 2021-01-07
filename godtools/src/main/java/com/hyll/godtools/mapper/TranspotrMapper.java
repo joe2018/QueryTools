@@ -35,9 +35,15 @@ public interface TranspotrMapper extends Mapper<TransportEntity> {
     List<TransportEntity> findListTransportEntity();
 
     /**
-     * 通过ids数组返回对应的记录
-     * @param ids
+     * 通过orderNumbers数组返回对应的记录
+     * @param orderNumbers
      * @return
      */
-    List<TransportEntity> findListTransportEntityById(List<String> ids);
+    List<TransportEntity> findListTransportEntityById(List<String> orderNumbers);
+
+    /**
+     *
+     * @param orderNumbers
+     */
+    void deleteListTransportEntityById(List<String> orderNumbers);
 }

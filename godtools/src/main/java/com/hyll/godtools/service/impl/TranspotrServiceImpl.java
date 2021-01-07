@@ -140,7 +140,8 @@ public class TranspotrServiceImpl implements TranspotrService {
 
     @Override
     public Map PageQuery(int pageNum, int pageSize, int typeId) {
-        Jedis jedis = RedisDS.create().getJedis();
+//        Jedis jedis = RedisDS.create().getJedis();
+        Jedis jedis = jedisUtil.getJedis();
         Page entityPage;
         String Key;
         //开启分页
@@ -188,9 +189,10 @@ public class TranspotrServiceImpl implements TranspotrService {
         });
         cacheOrderNumber.removeAll(orderNumberList);
         cachePlateNo.removeAll(plateNo);
-        list.forEach(item ->{
+        transpotrMapper.deleteListTransportEntityById(list);
+        /*list.forEach(item ->{
             transpotrMapper.deleteByID(item);
-        });
+        });*/
         return 0;
     }
 

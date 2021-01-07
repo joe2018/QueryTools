@@ -22,6 +22,7 @@ import com.hyll.godtools.pojo.TableType;
 
 import com.hyll.godtools.pojo.TransportEntity;
 import com.hyll.godtools.service.TranspotrService;
+import com.hyll.godtools.util.JedisUtil;
 import com.hyll.godtools.util.ReadExcel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -50,6 +51,8 @@ public class SourceController {
 
     @Autowired
     private TranspotrService transpotrService;
+    @Autowired
+    private JedisUtil jedisUtil;
 
 
     @RequestMapping("index")
@@ -101,7 +104,8 @@ public class SourceController {
             @ApiImplicitParam(name = "pageSize", value = "每页显示数量",paramType = "path", required = true, dataType = "int")})
     @RequestMapping(value = "/page/{pageNo}/{pageSize}", method = RequestMethod.GET)
     public Result getPageData(@PathVariable("pageNo") int pageNo, @PathVariable("pageSize") int pageSize){
-        Jedis jedis = RedisDS.create().getJedis();
+//        Jedis jedis = RedisDS.create().getJedis();
+        Jedis jedis = jedisUtil.getJedis();
         if (jedis.get("1—"+pageNo+"-"+pageSize) != null){
             JSONObject JsonData = JSONUtil.parseObj(jedis.get("1—"+pageNo+"-"+pageSize));
             return Result.success(JsonData);
@@ -119,7 +123,8 @@ public class SourceController {
             @ApiImplicitParam(name = "pageSize", value = "每页显示数量",paramType = "path", required = true, dataType = "int")})
     @RequestMapping(value = "/batch/{pageNo}/{pageSize}", method = RequestMethod.GET)
     public Result getBatchData(@PathVariable("pageNo") int pageNo, @PathVariable("pageSize") int pageSize){
-        Jedis jedis = RedisDS.create().getJedis();
+//        Jedis jedis = RedisDS.create().getJedis();
+        Jedis jedis = jedisUtil.getJedis();
         if (jedis.get("2—"+pageNo+"-"+pageSize) != null){
             JSONObject JsonData = JSONUtil.parseObj(jedis.get("2—"+pageNo+"-"+pageSize));
             return Result.success(JsonData);

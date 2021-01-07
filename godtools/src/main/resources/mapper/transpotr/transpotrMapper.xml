@@ -24,16 +24,25 @@
          </foreach>
      </insert>
 
-    <select id="findListTransportEntityById" parameterType="java.util.List">
-        select id,batch_number,order_number,customer_name,tracking_number,loading_time,license_plate,oil_card,occurrence_time from  transport
+    <select id="findListTransportEntityById" parameterType="java.util.List" resultType="com.hyll.godtools.pojo.TransportEntity">
+        select id,batch_number,order_number,customer_name,initiate_amount,loading_time,license_plate,oil_card,occurrence_time,payment_type from  transport
         <where>
-            id in
+            order_number in
             <foreach collection="list" separator="," open="(" close=")" item="item">
                 #{item}
             </foreach>
         </where>
     </select>
 
+    <delete id="deleteListTransportEntityById" parameterType="java.util.List">
+        delete from  transport
+        <where>
+            order_number in
+            <foreach collection="list" separator="," open="(" close=")" item="item">
+                #{item}
+            </foreach>
+        </where>
+    </delete>
 
 
 </mapper>
