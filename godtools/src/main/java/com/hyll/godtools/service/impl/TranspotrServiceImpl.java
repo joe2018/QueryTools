@@ -8,7 +8,6 @@ import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.db.nosql.redis.RedisDS;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.alicp.jetcache.Cache;
@@ -36,6 +35,8 @@ import redis.clients.jedis.Jedis;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
+import java.util.stream.Collectors;
+
 
 
 @Service
@@ -110,6 +111,7 @@ public class TranspotrServiceImpl implements TranspotrService {
             Date date = DateTime.now();
             int size = list.size();
             List<TransportEntity> entities = new ArrayList<>();
+            Map<String, String> collect = new HashMap<>();
             if(!batchId.isEmpty()){
                 for(int i = 0;i<size;i++){
                     if(StrUtil.isEmpty(cacheOrderNumber.get(list.get(i).getOrder_number()))){
@@ -119,10 +121,10 @@ public class TranspotrServiceImpl implements TranspotrService {
                         entities.add(list.get(i));
                         if((entities.size()==5000||i==size-1)&&entities.size()>0){
                             transpotrMapper.batchInsertTranspotrMapper(entities);
-                            entities.stream().forEach(f->{
-                                cacheOrderNumber.put(f.getOrder_number(),f.getOrder_number());
-                                cachePlateNo.put(f.getLicense_plate()+ DateUtils.formatDate(f.getLoading_time()), JSONUtil.toJsonStr(f));
-                            });
+                            collect = entities.stream().collect(Collectors.toMap(TransportEntity::getOrder_number, TransportEntity::getOrder_number));
+                            cacheOrderNumber.putAll(collect);
+                            collect = entities.stream().collect(Collectors.toMap(t->t.getLicense_plate()+DateUtils.formatDate(t.getLoading_time()),t->JSONUtil.toJsonStr(t),(t1,t2)->t1));
+                            cachePlateNo.putAll(collect);
                             entities = new ArrayList<>();
                         }
                     }
@@ -180,13 +182,9 @@ public class TranspotrServiceImpl implements TranspotrService {
     @Transactional
     public int delByList(List<String> list) {
         List<TransportEntity> entityList = transpotrMapper.findListTransportEntityById(list);
-        Set<String> orderNumberList = new HashSet<>();
-        Set<String> plateNo = new HashSet<>();
         //清除缓存信息记录
-        entityList.stream().forEach(f->{
-            orderNumberList.add(f.getOrder_number());
-            plateNo.add(f.getLicense_plate()+DateUtils.formatDate(f.getLoading_time()));
-        });
+        Set<String> orderNumberList = entityList.stream().map(TransportEntity::getOrder_number).collect(Collectors.toSet());
+        Set<String> plateNo = entityList.stream().map(t->t.getLicense_plate()+DateUtils.formatDate(t.getLoading_time())).collect(Collectors.toSet());
         cacheOrderNumber.removeAll(orderNumberList);
         cachePlateNo.removeAll(plateNo);
         transpotrMapper.deleteListTransportEntityById(list);
@@ -240,11 +238,20 @@ public class TranspotrServiceImpl implements TranspotrService {
     @PostConstruct
     private void initCache(){
         try {
-            List<TransportEntity> cache = transpotrMapper.findListTransportEntity();
-            cache.stream().forEach(f->{
-                cacheOrderNumber.put(f.getOrder_number(),f.getOrder_number());
-                cachePlateNo.put(f.getLicense_plate()+ DateUtils.formatDate(f.getLoading_time()), JSONUtil.toJsonStr(f));
-            });
+            List<TransportEntity> cache = new ArrayList<>();
+            Integer page = 1;
+            Integer pageSize = 10000;
+            Map<String,String> collect = new HashMap<>();
+            do {
+                cache = transpotrMapper.findListTransportEntity((page-1)*pageSize,pageSize);
+                if(cache.size()>0){
+                    collect = cache.stream().collect(Collectors.toMap(TransportEntity::getOrder_number, TransportEntity::getOrder_number));
+                    cacheOrderNumber.putAll(collect);
+                    collect = cache.stream().collect(Collectors.toMap(t->t.getLicense_plate()+DateUtils.formatDate(t.getLoading_time()),t->JSONUtil.toJsonStr(t),(t1,t2)->t1));
+                    cachePlateNo.putAll(collect);
+                }
+                page++;
+            }while (cache.size()>0);
             log.info("初始化缓存成功");
         }catch (Exception e){
             e.printStackTrace();

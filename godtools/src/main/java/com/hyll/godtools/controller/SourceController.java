@@ -1,6 +1,8 @@
 package com.hyll.godtools.controller;
 
 
+import cn.afterturn.easypoi.excel.ExcelImportUtil;
+import cn.afterturn.easypoi.excel.entity.ImportParams;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.convert.ConverterRegistry;
 import cn.hutool.core.io.FileTypeUtil;
@@ -14,6 +16,8 @@ import cn.hutool.db.nosql.redis.RedisDS;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import cn.hutool.poi.excel.ExcelExtractorUtil;
+import cn.hutool.poi.excel.ExcelUtil;
 import com.github.pagehelper.Page;
 import com.hyll.godtools.config.ResultCode;
 import com.hyll.godtools.pojo.Pager;
@@ -85,10 +89,18 @@ public class SourceController {
             return Result.failure(ResultCode.FILE_WRITE_FAILURE);
         }
         try{
-            long start = System.currentTimeMillis();
+            ImportParams params = new ImportParams();
+            params.setTitleRows(0);
+            params.setHeadRows(1);
+           /* long start = System.currentTimeMillis();
             List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
             long end = System.currentTimeMillis();
-            System.out.println(start-end+"毫秒");
+            System.out.println(end-start+"毫秒");*/
+            //替换poi
+            long start = System.currentTimeMillis();
+            List<TransportEntity> transportEntityList = ExcelImportUtil.importExcel(file.getInputStream(), TransportEntity.class, params);
+            long end= System.currentTimeMillis();
+            System.out.println(end-start+"毫秒");
             transpotrService.inserSqlByEccal(transportEntityList,fileMD5);
             return Result.success();
         }catch (Exception e){

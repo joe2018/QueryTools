@@ -31,8 +31,8 @@ public interface TranspotrMapper extends Mapper<TransportEntity> {
      * @return
      */
     @Select("select id,batch_number,order_number,customer_name,tracking_number,loading_time,license_plate,oil_card,occurrence_time\n" +
-            "       from transport")
-    List<TransportEntity> findListTransportEntity();
+            "       from transport limit #{page},#{pageSize}")
+    List<TransportEntity> findListTransportEntity(@Param("page")Integer page,@Param("pageSize") Integer pageSize);
 
     /**
      * 通过orderNumbers数组返回对应的记录

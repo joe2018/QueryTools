@@ -1,5 +1,7 @@
 package com.hyll.godtools.controller;
 
+import cn.afterturn.easypoi.excel.ExcelImportUtil;
+import cn.afterturn.easypoi.excel.entity.ImportParams;
 import cn.hutool.core.io.file.FileNameUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.json.JSONObject;
@@ -53,7 +55,19 @@ public class CompareController {
             return Result.failure(ResultCode.FILE_WRITE_FAILURE);
         }
         try {
+//            List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
+            ImportParams params = new ImportParams();
+            params.setTitleRows(0);
+            params.setHeadRows(1);
+           /* long start = System.currentTimeMillis();
             List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
+            long end = System.currentTimeMillis();
+            System.out.println(end-start+"毫秒");*/
+            //替换poi
+            long start = System.currentTimeMillis();
+            List<TransportEntity> transportEntityList = ExcelImportUtil.importExcel(file.getInputStream(), TransportEntity.class, params);
+            long end= System.currentTimeMillis();
+            System.out.println(end-start+"毫秒");
             Map<Integer, List<TransportEntity>> resultMap = transpotrService.compareByExcel(transportEntityList);
             String strId = sequenceId.nextId();
             transpotrService.setJedisTransoportEntity(strId,resultMap);
