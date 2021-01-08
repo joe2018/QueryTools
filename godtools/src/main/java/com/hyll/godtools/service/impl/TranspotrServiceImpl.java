@@ -124,7 +124,7 @@ public class TranspotrServiceImpl implements TranspotrService {
                         list.get(i).setLoading_date(list.get(i).getLoading_time());
                         list.get(i).setOccurrence_time(date);
                         entities.add(list.get(i));
-                        if((entities.size()==5000||i==size-1)&&entities.size()>0){
+                        if((entities.size()==1000||i==size-1)&&entities.size()>0){
                             threadList.add(entities);
                             entities = new ArrayList<>();
 
@@ -132,8 +132,10 @@ public class TranspotrServiceImpl implements TranspotrService {
                     }
                 }
             }
+
+            ExecutorService executorService = Executors.newFixedThreadPool(15);
             //同步多线程入库
-            CompletionService<String> completionService = ThreadUtil.newCompletionService();
+            CompletionService<String> completionService = ThreadUtil.newCompletionService(executorService);
             threadList.stream().forEach(f->{
                 completionService.submit(new Callable<String>() {
                     @Override
@@ -149,6 +151,14 @@ public class TranspotrServiceImpl implements TranspotrService {
                     }
                 });
             });
+            threadList.stream().forEach(f->{
+                try {
+                    completionService.take().get();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            });
+            executorService.shutdown();
             tableType.setBatch_number(batchId);
                 tableType.setBatch_time(date);
                 tableType.setFile_md5(fileMD5);
