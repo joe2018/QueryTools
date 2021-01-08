@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @Api(tags = "compareApi")
@@ -66,6 +67,7 @@ public class CompareController {
             //替换poi
             long start = System.currentTimeMillis();
             List<TransportEntity> transportEntityList = ExcelImportUtil.importExcel(file.getInputStream(), TransportEntity.class, params);
+            transportEntityList = transportEntityList.stream().filter(f -> f != null && f.getLicense_plate()!=null).collect(Collectors.toList());
             long end= System.currentTimeMillis();
             System.out.println(end-start+"毫秒");
             Map<Integer, List<TransportEntity>> resultMap = transpotrService.compareByExcel(transportEntityList);

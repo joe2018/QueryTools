@@ -3,4 +3,4 @@ redisPassword: cnmg3333
 redisPort: 6379
 mysqlRoot: root
 mysqlPassword : Joe20131215!.
-mysqlUrl: jdbc:mysql://47.104.245.206:3306/cartools?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&useSSL=false
+mysqlUrl: jdbc:mysql://47.104.245.206:3306/cartools?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true

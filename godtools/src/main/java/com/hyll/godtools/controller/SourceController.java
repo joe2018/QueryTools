@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @Api(tags = "sourceApi")
@@ -99,6 +100,7 @@ public class SourceController {
             //替换poi
             long start = System.currentTimeMillis();
             List<TransportEntity> transportEntityList = ExcelImportUtil.importExcel(file.getInputStream(), TransportEntity.class, params);
+            transportEntityList = transportEntityList.stream().filter(f -> f != null && f.getOrder_number() != null).collect(Collectors.toList());
             long end= System.currentTimeMillis();
             System.out.println(end-start+"毫秒");
             transpotrService.inserSqlByEccal(transportEntityList,fileMD5);

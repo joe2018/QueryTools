@@ -6,6 +6,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.file.FileNameUtil;
 import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.lang.TypeReference;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
@@ -35,6 +36,10 @@ import redis.clients.jedis.Jedis;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 
@@ -102,6 +107,7 @@ public class TranspotrServiceImpl implements TranspotrService {
     @Override
     @Transactional
     public void inserSqlByEccal(List<TransportEntity> list,String fileMD5) {
+        List<TransportEntity> entities = new ArrayList<>();
         try {
             TableType tableType = new TableType();
             //参数1为终端ID
@@ -110,7 +116,7 @@ public class TranspotrServiceImpl implements TranspotrService {
             String batchId = Convert.toStr(snowflake.nextId());
             Date date = DateTime.now();
             int size = list.size();
-            List<TransportEntity> entities = new ArrayList<>();
+            List<List<TransportEntity>> threadList = new ArrayList<>();
             if(!batchId.isEmpty()){
                 for(int i = 0;i<size;i++){
                     if(StrUtil.isEmpty(cacheOrderNumber.get(list.get(i).getOrder_number()))){
@@ -119,17 +125,34 @@ public class TranspotrServiceImpl implements TranspotrService {
                         list.get(i).setOccurrence_time(date);
                         entities.add(list.get(i));
                         if((entities.size()==5000||i==size-1)&&entities.size()>0){
-                            transpotrMapper.batchInsertTranspotrMapper(entities);
-                            pushCache(entities);
+                            threadList.add(entities);
                             entities = new ArrayList<>();
-                        }
+
+                        };
                     }
                 }
-                tableType.setBatch_number(batchId);
+            }
+            //同步多线程入库
+            CompletionService<String> completionService = ThreadUtil.newCompletionService();
+            threadList.stream().forEach(f->{
+                completionService.submit(new Callable<String>() {
+                    @Override
+                    public String call() throws Exception {
+                        try {
+                            transpotrMapper.batchInsertTranspotrMapper(f);
+                            pushCache(f);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                            removeCache(f);
+                        }
+                        return "成功："+f.size();
+                    }
+                });
+            });
+            tableType.setBatch_number(batchId);
                 tableType.setBatch_time(date);
                 tableType.setFile_md5(fileMD5);
                 tableTypeMapper.insertSelective(tableType);
-            }
         }catch (Exception e){
             e.printStackTrace();
         }

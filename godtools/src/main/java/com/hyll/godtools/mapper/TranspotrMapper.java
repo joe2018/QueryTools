@@ -30,7 +30,7 @@ public interface TranspotrMapper extends Mapper<TransportEntity> {
      * 查询出库里所有数据，进行缓存
      * @return
      */
-    @Select("select id,batch_number,order_number,customer_name,tracking_number,loading_time,license_plate,oil_card,occurrence_time\n" +
+    @Select("select id,batch_number,order_number,customer_name,tracking_number,initiate_amount,loading_time,license_plate,oil_card,occurrence_time\n" +
             "       from transport limit #{page},#{pageSize}")
     List<TransportEntity> findListTransportEntity(@Param("page")Integer page,@Param("pageSize") Integer pageSize);
 
@@ -46,7 +46,7 @@ public interface TranspotrMapper extends Mapper<TransportEntity> {
      * @param batchNumber
      * @return
      */
-    @Select("select id,batch_number,order_number,customer_name,tracking_number,loading_time,license_plate,oil_card,occurrence_time\n" +
+    @Select("select id,batch_number,order_number,customer_name,initiate_amount,tracking_number,loading_time,license_plate,oil_card,occurrence_time\n" +
             "       from transport where batch_number = #{batchNumber}")
     List<TransportEntity> findListTranportEntityByBatchNumber(String batchNumber);
 
