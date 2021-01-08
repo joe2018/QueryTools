@@ -111,7 +111,6 @@ public class TranspotrServiceImpl implements TranspotrService {
             Date date = DateTime.now();
             int size = list.size();
             List<TransportEntity> entities = new ArrayList<>();
-            Map<String, String> collect = new HashMap<>();
             if(!batchId.isEmpty()){
                 for(int i = 0;i<size;i++){
                     if(StrUtil.isEmpty(cacheOrderNumber.get(list.get(i).getOrder_number()))){
@@ -121,10 +120,7 @@ public class TranspotrServiceImpl implements TranspotrService {
                         entities.add(list.get(i));
                         if((entities.size()==5000||i==size-1)&&entities.size()>0){
                             transpotrMapper.batchInsertTranspotrMapper(entities);
-                            collect = entities.stream().collect(Collectors.toMap(TransportEntity::getOrder_number, TransportEntity::getOrder_number));
-                            cacheOrderNumber.putAll(collect);
-                            collect = entities.stream().collect(Collectors.toMap(t->t.getLicense_plate()+DateUtils.formatDate(t.getLoading_time()),t->JSONUtil.toJsonStr(t),(t1,t2)->t1));
-                            cachePlateNo.putAll(collect);
+                            pushCache(entities);
                             entities = new ArrayList<>();
                         }
                     }
@@ -182,11 +178,8 @@ public class TranspotrServiceImpl implements TranspotrService {
     @Transactional
     public int delByList(List<String> list) {
         List<TransportEntity> entityList = transpotrMapper.findListTransportEntityById(list);
+        removeCache(entityList);
         //清除缓存信息记录
-        Set<String> orderNumberList = entityList.stream().map(TransportEntity::getOrder_number).collect(Collectors.toSet());
-        Set<String> plateNo = entityList.stream().map(t->t.getLicense_plate()+DateUtils.formatDate(t.getLoading_time())).collect(Collectors.toSet());
-        cacheOrderNumber.removeAll(orderNumberList);
-        cachePlateNo.removeAll(plateNo);
         transpotrMapper.deleteListTransportEntityById(list);
         /*list.forEach(item ->{
             transpotrMapper.deleteByID(item);
@@ -197,6 +190,8 @@ public class TranspotrServiceImpl implements TranspotrService {
     @Override
     @Transactional
     public int delByBatchID(String BatchID) {
+        List<TransportEntity> entityList = transpotrMapper.findListTranportEntityByBatchNumber(BatchID);
+        removeCache(entityList);
         transpotrMapper.deleteByBatchID(BatchID);
         tableTypeMapper.deleteByBatchID(BatchID);
         return 0;
@@ -241,15 +236,9 @@ public class TranspotrServiceImpl implements TranspotrService {
             List<TransportEntity> cache = new ArrayList<>();
             Integer page = 1;
             Integer pageSize = 10000;
-            Map<String,String> collect = new HashMap<>();
             do {
                 cache = transpotrMapper.findListTransportEntity((page-1)*pageSize,pageSize);
-                if(cache.size()>0){
-                    collect = cache.stream().collect(Collectors.toMap(TransportEntity::getOrder_number, TransportEntity::getOrder_number));
-                    cacheOrderNumber.putAll(collect);
-                    collect = cache.stream().collect(Collectors.toMap(t->t.getLicense_plate()+DateUtils.formatDate(t.getLoading_time()),t->JSONUtil.toJsonStr(t),(t1,t2)->t1));
-                    cachePlateNo.putAll(collect);
-                }
+                pushCache(cache);
                 page++;
             }while (cache.size()>0);
             log.info("初始化缓存成功");
@@ -313,7 +302,31 @@ public class TranspotrServiceImpl implements TranspotrService {
 
     }
 
+    /**
+     * 传递需要清除缓存的集合
+     * @param entityList
+     */
+    private void removeCache(List<TransportEntity> entityList){
+        if(entityList.size()>0){
+            //清除缓存信息记录
+            Set<String> orderNumberList = entityList.stream().map(TransportEntity::getOrder_number).collect(Collectors.toSet());
+            Set<String> plateNo = entityList.stream().map(t->t.getLicense_plate()+DateUtils.formatDate(t.getLoading_time())).collect(Collectors.toSet());
+            cacheOrderNumber.removeAll(orderNumberList);
+            cachePlateNo.removeAll(plateNo);
+        }
+    }
 
-
+    /**
+     * 传递需要新增的缓存集合
+     * @param entityList
+     */
+    private void pushCache(List<TransportEntity> entityList){
+        if(entityList.size()>0){
+            Map<String,String> collect = entityList.stream().collect(Collectors.toMap(TransportEntity::getOrder_number, TransportEntity::getOrder_number));
+            cacheOrderNumber.putAll(collect);
+            collect = entityList.stream().collect(Collectors.toMap(t->t.getLicense_plate()+DateUtils.formatDate(t.getLoading_time()),t->JSONUtil.toJsonStr(t),(t1,t2)->t1));
+            cachePlateNo.putAll(collect);
+        }
+    }
 
 }

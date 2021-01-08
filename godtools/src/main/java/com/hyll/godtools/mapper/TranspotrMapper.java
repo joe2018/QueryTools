@@ -42,8 +42,19 @@ public interface TranspotrMapper extends Mapper<TransportEntity> {
     List<TransportEntity> findListTransportEntityById(List<String> orderNumbers);
 
     /**
-     *
+     * 通过操作单号查询出列表
+     * @param batchNumber
+     * @return
+     */
+    @Select("select id,batch_number,order_number,customer_name,tracking_number,loading_time,license_plate,oil_card,occurrence_time\n" +
+            "       from transport where batch_number = #{batchNumber}")
+    List<TransportEntity> findListTranportEntityByBatchNumber(String batchNumber);
+
+    /**
+     * 运单号
      * @param orderNumbers
      */
     void deleteListTransportEntityById(List<String> orderNumbers);
+
+
 }
