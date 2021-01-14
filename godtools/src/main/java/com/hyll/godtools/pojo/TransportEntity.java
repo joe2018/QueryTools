@@ -262,7 +262,7 @@ public class TransportEntity implements Serializable {
      */
     @ApiModelProperty(value = "到达时间（小时）",example = "1")
     @Excel(name = "到达时间（小时）")
-    private	BigDecimal	transport_time;
+    private	String	transport_time;
 
     /**
      * 总装货量
