@@ -93,19 +93,20 @@ public class SourceController {
             ImportParams params = new ImportParams();
             params.setTitleRows(0);
             params.setHeadRows(1);
-           /* long start = System.currentTimeMillis();
-            List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
-            long end = System.currentTimeMillis();
-            System.out.println(end-start+"毫秒");*/
-            //替换poi
             long start = System.currentTimeMillis();
-            List<TransportEntity> transportEntityList = ExcelImportUtil.importExcel(file.getInputStream(), TransportEntity.class, params);
+            List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
+//            long end = System.currentTimeMillis();
+//            System.out.println(end-start+"毫秒");
+            //替换poi
+            /*long start = System.currentTimeMillis();
+            List<TransportEntity> transportEntityList = ExcelImportUtil.importExcel(file.getInputStream(), TransportEntity.class, params);*/
             transportEntityList = transportEntityList.stream().filter(f -> f != null && f.getOrder_number() != null).collect(Collectors.toList());
             long end= System.currentTimeMillis();
             System.out.println(end-start+"毫秒");
             transpotrService.inserSqlByEccal(transportEntityList,fileMD5);
             return Result.success();
         }catch (Exception e){
+            e.printStackTrace();
             return Result.failure(ResultCode.FILE_WRITE_ERROR);
         }
     }

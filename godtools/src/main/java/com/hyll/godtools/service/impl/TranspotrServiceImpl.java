@@ -268,7 +268,7 @@ public class TranspotrServiceImpl implements TranspotrService {
         try {
             List<TransportEntity> cache = new ArrayList<>();
             Integer page = 1;
-            Integer pageSize = 10000;
+            Integer pageSize = 100000;
             do {
                 cache = transpotrMapper.findListTransportEntity((page-1)*pageSize,pageSize);
                 pushCache(cache);
