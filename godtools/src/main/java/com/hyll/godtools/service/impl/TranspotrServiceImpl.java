@@ -232,10 +232,12 @@ public class TranspotrServiceImpl implements TranspotrService {
 
 
 
+    @Override
     public Boolean SeleteByFileMD5(String fileMD5){
         return tableTypeMapper.SeleteByFileMD5(fileMD5).size() > 0;
     }
 
+    @Override
     public Boolean checkFile(MultipartFile file){
         if (file.isEmpty()) {
             return false;
@@ -250,6 +252,7 @@ public class TranspotrServiceImpl implements TranspotrService {
      * @param transpotrPage 分页查询结果
      * @return 数据map
      */
+    @Override
     public Map<String,Object> getResultsMap(Page<T> transpotrPage) {
         Map <String,Object> resultsMap = new HashMap<>();
         HashMap<Object, Object> colorMap = Convert.convert(new TypeReference<HashMap<Object, Object>>() {}, transpotrPage);
@@ -263,12 +266,13 @@ public class TranspotrServiceImpl implements TranspotrService {
     /**
      * 初始化缓存信息
      */
-    @PostConstruct
-    private void initCache(){
+//    @PostConstruct
+    @Override
+    public void initCache(){
         try {
-            List<TransportEntity> cache = new ArrayList<>();
             Integer page = 1;
-            Integer pageSize = 100000;
+            Integer pageSize = 50000;
+            List<TransportEntity> cache = new ArrayList<>();
             do {
                 cache = transpotrMapper.findListTransportEntity((page-1)*pageSize,pageSize);
                 pushCache(cache);

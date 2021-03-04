@@ -35,4 +35,6 @@ public interface TranspotrService {
     Map<Integer,List<TransportEntity>> getJedisTransportEntity(String sequenceId,Integer pageNum,Integer pageSize);
 
     long getJedisTransportEntityTotal(String sequenceId);
+
+    void initCache();
 }

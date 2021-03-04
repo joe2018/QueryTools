@@ -4,4 +4,5 @@ public interface Constant {
     String ORDER_NUMBER="orderNumber";
     String PLATE_NO="plateNo";
     String SEQUENCE_ID="sequence_id";
+    String SYNC_CACHE="syncCache";
 }

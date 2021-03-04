@@ -18,7 +18,7 @@ spring:
       #   数据源其他配置
       minIdle: 5
       maxActive: 30
-      maxWait: 60000
+      maxWait: 100000
       timeBetweenEvictionRunsMillis: 60000
       minEvictableIdleTimeMillis: 300000
       validationQuery: SELECT 1

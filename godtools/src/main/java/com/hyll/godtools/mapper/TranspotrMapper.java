@@ -54,5 +54,12 @@ public interface TranspotrMapper extends Mapper<TransportEntity> {
      */
     void deleteListTransportEntityById(List<String> orderNumbers);
 
+    /**
+     * 查询总的条数
+     * @return
+     */
+    @Select("select count(1) from transport")
+    long findCountTranportEntity();
+
 
 }

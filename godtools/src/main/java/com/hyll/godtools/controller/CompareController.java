@@ -3,12 +3,16 @@ package com.hyll.godtools.controller;
 import cn.afterturn.easypoi.excel.ExcelImportUtil;
 import cn.afterturn.easypoi.excel.entity.ImportParams;
 import cn.hutool.core.io.file.FileNameUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
+import com.alicp.jetcache.Cache;
+import com.alicp.jetcache.anno.CreateCache;
 import com.hyll.godtools.config.ResultCode;
 import com.hyll.godtools.config.SequenceId;
+import com.hyll.godtools.pojo.Constant;
 import com.hyll.godtools.pojo.Result;
 import com.hyll.godtools.pojo.TransportEntity;
 import com.hyll.godtools.service.TranspotrService;
@@ -28,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @RestController
@@ -41,6 +46,8 @@ public class CompareController {
     private TranspotrService transpotrService;
     @Autowired
     private SequenceId sequenceId;
+    @CreateCache(name = Constant.SYNC_CACHE,timeUnit = TimeUnit.HOURS,expire = 1)
+    private Cache<String,String> cacheUploadNocc;
 
     /**
      * 上传需要比对的表进行比对，输出比对结果，若车牌号及装货时间存在相同则视为异常，同时输出源数据与导入的数据，若无则输出导入数据
@@ -57,25 +64,39 @@ public class CompareController {
         }
         try {
 //            List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
-            ImportParams params = new ImportParams();
+           /* ImportParams params = new ImportParams();
             params.setTitleRows(0);
-            params.setHeadRows(1);
-           /* long start = System.currentTimeMillis();
+            params.setHeadRows(1);*/
+            long start = System.currentTimeMillis();
             List<TransportEntity> transportEntityList = ReadExcel.readExcel(file);
             long end = System.currentTimeMillis();
-            System.out.println(end-start+"毫秒");*/
+            System.out.println(end-start+"毫秒");
             //替换poi
-            long start = System.currentTimeMillis();
+          /*  long start = System.currentTimeMillis();
             List<TransportEntity> transportEntityList = ExcelImportUtil.importExcel(file.getInputStream(), TransportEntity.class, params);
             transportEntityList = transportEntityList.stream().filter(f -> f != null && f.getLicense_plate()!=null).collect(Collectors.toList());
             long end= System.currentTimeMillis();
-            System.out.println(end-start+"毫秒");
+            System.out.println(end-start+"毫秒");*/
             Map<Integer, List<TransportEntity>> resultMap = transpotrService.compareByExcel(transportEntityList);
             String strId = sequenceId.nextId();
             transpotrService.setJedisTransoportEntity(strId,resultMap);
             return Result.success(strId);
         } catch (Exception e) {
+            e.printStackTrace();
             return Result.failure(ResultCode.OPERATION_FAILURS);
         }
+    }
+
+    @GetMapping("/initCache")
+    public Result initCache(){
+        ThreadUtil.execute(()->{
+            cacheUploadNocc.tryLockAndRun(Constant.SYNC_CACHE, 1, TimeUnit.HOURS, new Runnable() {
+                @Override
+                public void run() {
+                    transpotrService.initCache();
+                }
+            });
+        });
+        return Result.success("异步同步缓存中，请等待十分钟后操作");
     }
 }
