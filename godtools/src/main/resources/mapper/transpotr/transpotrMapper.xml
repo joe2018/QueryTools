@@ -45,7 +45,8 @@
     </delete>
 
     <select id="findListTransportEntity" resultType="com.hyll.godtools.pojo.TransportEntity">
-        select id,batch_number,order_number,customer_name,tracking_number,initiate_amount,loading_time,license_plate,oil_card,occurrence_time
+        select id,batch_number,order_number,customer_name,tracking_number,initiate_amount,loading_time,license_plate,oil_card,occurrence_time,
+        delivery_provinces,delivery_city,delivery_area,delivery_address,receive_provinces,receive_city,receive_area,receive_address,goods_type
                 from transport GROUP BY order_number limit #{page},#{pageSize}
     </select>
 </mapper>
