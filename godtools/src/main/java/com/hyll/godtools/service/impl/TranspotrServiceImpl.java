@@ -270,14 +270,28 @@ public class TranspotrServiceImpl implements TranspotrService {
     @Override
     public void initCache(){
         try {
-            Integer page = 1;
             Integer pageSize = 50000;
-            List<TransportEntity> cache = new ArrayList<>();
-            do {
-                cache = transpotrMapper.findListTransportEntity((page-1)*pageSize,pageSize);
-                pushCache(cache);
-                page++;
-            }while (cache.size()>0);
+            ExecutorService executorService = Executors.newFixedThreadPool(10);
+            long total = transpotrMapper.findCountTranportEntity();
+            long l = total / pageSize+1;
+            //同步多线程入库
+            CompletionService<String> completionService = ThreadUtil.newCompletionService(executorService);
+            for(int i =1;i<=l;i++){
+                int finalI = i;
+                completionService.submit(new Callable<String>() {
+                    @Override
+                    public String call() throws Exception {
+                        List<TransportEntity> cache = transpotrMapper.findListTransportEntity((finalI -1)*pageSize,pageSize);
+                        pushCache(cache);
+                        return null;
+                    }
+                });
+            }
+            for(int i = 1;i<l;i++){
+                completionService.take().get();
+            }
+            executorService.shutdown();
+
             log.info("初始化缓存成功");
         }catch (Exception e){
             e.printStackTrace();

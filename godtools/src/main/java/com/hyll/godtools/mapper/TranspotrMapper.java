@@ -32,6 +32,7 @@ public interface TranspotrMapper extends Mapper<TransportEntity> {
      */
     List<TransportEntity> findListTransportEntity(@Param("page")Integer page,@Param("pageSize") Integer pageSize);
 
+
     /**
      * 通过orderNumbers数组返回对应的记录
      * @param orderNumbers
